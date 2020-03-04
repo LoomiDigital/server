@@ -7,6 +7,7 @@ const MongoDBStore = require('connect-mongodb-session')(session);
 const bodyParser = require('body-parser');
 const csrf = require('csurf');
 const mongoose = require('mongoose');
+const flash = require('connect-flash');
 
 const errorController = require('./controllers/error');
 
@@ -41,6 +42,8 @@ app.use(
 );
 
 app.use(csrfProtection);
+app.use(flash());
+
 app.use((req, res, next) => {
   res.locals.isAuthenticated = req.session.isLoggedIn;
   res.locals.csrfToken = req.csrfToken();

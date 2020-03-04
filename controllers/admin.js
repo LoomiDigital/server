@@ -45,29 +45,29 @@ exports.getEditProduct = (req, res, next) => {
     .catch(err => console.log(err));
 };
 
-exports.postEditProduct = (req, res, next) => {
-  const id = req.body.productId;
-  const title = req.body.title;
-  const price = req.body.price;
-  const imageUrl = req.body.imageUrl;
-  const description = req.body.description;
+exports.postEditProduct = async (req, res, next) => {
+  const { productId, title, price, imageUrl, description } = req.body;
 
-  Product.findById(id)
-    .then(product => {
-      product.title = title;
-      product.price = price;
-      product.description = description;
-      product.imageUrl = imageUrl;
-      return product.save();
-    })
-    .then(() => {
-      res.redirect('/admin/products');
-    })
-    .catch(err => console.log(err));
+  const product = await Product.findById(productId).catch(err =>
+    console.log(err)
+  );
+
+  if (product.userId.toString() !== req.user._id.toString()) {
+    return res.redirect('/');
+  }
+
+  product.title = title;
+  product.price = price;
+  product.description = description;
+  product.imageUrl = imageUrl;
+
+  await product.save();
+
+  res.redirect('/admin/products');
 };
 
 exports.getProducts = (req, res, next) => {
-  Product.find()
+  Product.find({ userId: req.user._id })
     .then(products =>
       res.render('admin/products', {
         prods: products,
@@ -80,7 +80,8 @@ exports.getProducts = (req, res, next) => {
 
 exports.postDeleteProduct = (req, res, next) => {
   const prodId = req.body.productId;
-  Product.findByIdAndRemove(prodId)
+
+  Product.deleteOne({ _id: prodId, userId: req.user._id })
     .then(() => res.redirect('/admin/products'))
     .catch(err => console.log(err));
 };
